@@ -1,41 +1,63 @@
-// import {useState} from 'react';
-// import logo from './assets/images/logo-universal.png';
-// import './App.css';
-// import {Greet} from "../wailsjs/go/main/App";
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './lib/AuthContext'
+import Navigation from './components/Navigation'
+import Home from './pages/Home'
+import Profile from './pages/Profile'
+import Explore from './pages/Explore'
+import Settings from './pages/Settings'
+import PostNote from './pages/PostNote'
+import Login from './pages/Login'
 
-// function App() {
-//     const [resultText, setResultText] = useState("Please enter your name below 👇");
-//     const [name, setName] = useState('');
-//     const updateName = (e: any) => setName(e.target.value);
-//     const updateResultText = (result: string) => setResultText(result);
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isLoggedIn } = useAuth()
+  
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />
+  }
 
-//     function greet() {
-//         Greet(name).then(updateResultText);
-//     }
+  return <>{children}</>
+}
 
-//     return (
-//         <div id="App">
-//             <img src={logo} id="logo" alt="logo"/>
-//             <div id="result" className="result">{resultText}</div>
-//             <div id="input" className="input-box">
-//                 <input id="name" className="input" onChange={updateName} autoComplete="off" name="input" type="text"/>
-//                 <button className="btn" onClick={greet}>Greet</button>
-//             </div>
-//         </div>
-//     )
-// }
+export default function App() {
+  const { isLoggedIn } = useAuth()
 
-// export default App
-
-import React from 'react';
-import SendNote from './SendNote';
-
-const App = () => {
-    return (
-        <div>
-            <SendNote />
-        </div>
-    );
-};
-
-export default App;
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main className="container mx-auto px-4 py-6">
+        <Routes>
+          <Route 
+            path="/login" 
+            element={isLoggedIn ? <Navigate to="/" replace /> : <Login />} 
+          />
+          <Route path="/" element={<Home />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/post"
+            element={
+              <ProtectedRoute>
+                <PostNote />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </main>
+    </div>
+  )
+}

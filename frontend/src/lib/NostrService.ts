@@ -1,4 +1,4 @@
-import "websocket-polyfill";
+import "websocket-polyfill"
 import {
     relayInit,
     generatePrivateKey,
@@ -8,9 +8,9 @@ import {
     SimplePool,
     nip19,
     finishEvent
-} from "nostr-tools";
-import sha256 from "crypto-js/sha256";
-import Hex from "crypto-js/enc-hex";
+} from "nostr-tools"
+import sha256 from "crypto-js/sha256"
+import Hex from "crypto-js/enc-hex"
 
 export enum Kind {
     Metadata = 0,
@@ -38,6 +38,36 @@ export class NostrService {
     constructor() {
         this.pool = new SimplePool();
         this.currentRelay = null;
+    }
+
+    /**
+     * Validates and formats a private key
+     * @param key The key to validate
+     * @returns The formatted hex key
+     */
+    public validateAndFormatKey(key: string): string {
+        // Remove whitespace
+        key = key.trim();
+
+        try {
+            // If it's an nsec key, decode it to hex
+            if (key.startsWith('nsec')) {
+                const { type, data } = nip19.decode(key);
+                if (type === 'nsec') {
+                    return data as string;
+                }
+            }
+
+            // If it's already a hex string, validate it
+            const hexRegex = /^[0-9a-fA-F]{64}$/;
+            if (hexRegex.test(key)) {
+                return key;
+            }
+
+            throw new Error('Invalid private key format');
+        } catch (err) {
+            throw new Error('Invalid private key format. Must be a 64-character hex string or nsec format.');
+        }
     }
 
     /**
@@ -85,36 +115,6 @@ export class NostrService {
     }
 
     /**
-     * Validates and formats a private key
-     * @param key The key to validate
-     * @returns The formatted hex key
-     */
-    private validateAndFormatKey(key: string): string {
-        // Remove whitespace
-        key = key.trim();
-
-        try {
-            // If it's an nsec key, decode it to hex
-            if (key.startsWith('nsec')) {
-                const { type, data } = nip19.decode(key);
-                if (type === 'nsec') {
-                    return data as string;
-                }
-            }
-
-            // If it's already a hex string, validate it
-            const hexRegex = /^[0-9a-fA-F]{64}$/;
-            if (hexRegex.test(key)) {
-                return key;
-            }
-
-            throw new Error('Invalid private key format');
-        } catch (err) {
-            throw new Error('Invalid private key format. Must be a 64-character hex string or nsec format.');
-        }
-    }
-
-    /**
      * Creates and signs a new NOSTR event.
      * @param kind The kind of the event.
      * @param privateKey The private key of the creator.
@@ -158,6 +158,7 @@ export class NostrService {
 
         return event;
     }
+
     /**
      * Subscribes to events from the current relay based on the provided filters.
      * @param filters Array of filters to apply to the subscription.
